@@ -19,13 +19,21 @@ func main() {
 	db := context.Connect()
 	defer db.Close()
 
-	userRepo := repository.NewUserRepo(db)
-	handler.UserRepo = userRepo
-	handler := handler.NewUserHandler()
+	//userRepo := repository.NewUserRepo(db)
+	orderRepo := repository.NewOrderRepo(db)
+
+	//handler.UserRepo = userRepo
+	//userService := handler.NewUserHandler()
+
+	handler.OrderRepo = orderRepo
+	orderService := handler.NewOrderHandler()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/users", handler.UserHandler)
-	r.HandleFunc("/users/{id}", handler.UserHandler)
+	//r.HandleFunc("/users", userService.UserHandler)
+	//r.HandleFunc("/users/{id}", userService.UserHandler)
+
+	r.HandleFunc("/orders", orderService.OrderHandler)
+	r.HandleFunc("/orders/{id}", orderService.OrderHandler)
 
 	fmt.Println("Now listening on port" + PORT)
 	srv := &http.Server{

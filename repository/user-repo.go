@@ -27,7 +27,7 @@ func NewUserRepo(context *sql.DB) UserRepoIface {
 func (repo *UserRepo) GetUsers(ctx context.Context) ([]*entity.User, error) {
 	users := []*entity.User{}
 
-	data, err := repo.sql.QueryContext(ctx, "SELECT id, username, password, email, age FROM [USER]")
+	data, err := repo.sql.QueryContext(ctx, "SELECT id, username, password, email, age FROM USERS")
 	defer data.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +50,7 @@ func (repo *UserRepo) GetUsers(ctx context.Context) ([]*entity.User, error) {
 func (repo *UserRepo) GetUserById(ctx context.Context, id int) (*entity.User, error) {
 	var user entity.User
 
-	data, err := repo.sql.QueryContext(ctx, "SELECT id, username, password, email, age FROM [USER] WHERE Id = @Id",
+	data, err := repo.sql.QueryContext(ctx, "SELECT id, username, password, email, age FROM USERS WHERE Id = @Id",
 		sql.Named("Id", id))
 	defer data.Close()
 	if err != nil {
@@ -77,7 +77,7 @@ func (repo *UserRepo) GetUserById(ctx context.Context, id int) (*entity.User, er
 func (repo *UserRepo) CreateUser(ctx context.Context, user entity.User) (string, error) {
 	var result string
 
-	_, err := repo.sql.ExecContext(ctx, "INSERT into [USER] (username, email, password, age) values (@username, @email, @password, @age)",
+	_, err := repo.sql.ExecContext(ctx, "INSERT into USERS (username, email, password, age) values (@username, @email, @password, @age)",
 		sql.Named("username", user.Username),
 		sql.Named("email", user.Email),
 		sql.Named("password", user.Password),
@@ -95,7 +95,7 @@ func (repo *UserRepo) CreateUser(ctx context.Context, user entity.User) (string,
 func (repo *UserRepo) UpdateUser(ctx context.Context, id int, user entity.User) (string, error) {
 	var result string
 
-	_, err := repo.sql.ExecContext(ctx, "UPDATE [USER] set username = @username, email = @email, password = @password, age = @age where id = @id",
+	_, err := repo.sql.ExecContext(ctx, "UPDATE USERS set username = @username, email = @email, password = @password, age = @age where id = @id",
 		sql.Named("id", id),
 		sql.Named("username", user.Username),
 		sql.Named("email", user.Email),
@@ -107,14 +107,14 @@ func (repo *UserRepo) UpdateUser(ctx context.Context, id int, user entity.User) 
 		return "", err
 	}
 
-	result = "User updated successfuly"
+	result = "User updated successfully"
 	return result, nil
 }
 
 func (repo *UserRepo) DeleteUser(ctx context.Context, id int) (string, error) {
 	var result string
 
-	_, err := repo.sql.ExecContext(ctx, "DELETE from [USER] where id=@id",
+	_, err := repo.sql.ExecContext(ctx, "DELETE from USERS where id=@id",
 		sql.Named("id", id))
 
 	if err != nil {
