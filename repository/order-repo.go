@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang-crud-sql/entity"
 	"log"
+	"sync"
 )
 
 type OrderRepoIface interface {
@@ -26,7 +27,6 @@ func NewOrderRepo(context *sql.DB) OrderRepoIface {
 
 func (repo *OrderRepo) GetOrders(ctx context.Context) ([]*entity.Order, error) {
 	orders := []*entity.Order{}
-	items := []entity.Item{}
 
 	data, err := repo.sql.QueryContext(ctx, "SELECT order_id, customer_name, ordered_at FROM Orders")
 	defer data.Close()
@@ -45,27 +45,31 @@ func (repo *OrderRepo) GetOrders(ctx context.Context) ([]*entity.Order, error) {
 		orders = append(orders, &order)
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(orders))
 	for i := 0; i < len(orders); i++ {
-		data, err = repo.sql.QueryContext(ctx, "SELECT item_id, item_code, description, quantity FROM Items WHERE order_id = @Order_Id ",
-			sql.Named("Order_Id", orders[i].OrderId))
-		defer data.Close()
-		if err != nil {
-			log.Fatal(err)
-			return nil, err
-		}
-
-		for data.Next() {
-			var item entity.Item
-			err := data.Scan(&item.ItemId, &item.ItemCode, &item.Description, &item.Quantity)
+		go func(x int) {
+			defer wg.Done()
+			data, err = repo.sql.QueryContext(ctx, "SELECT item_id, item_code, description, quantity FROM Items WHERE order_id = @Order_Id ",
+				sql.Named("Order_Id", orders[x].OrderId))
+			defer data.Close()
 			if err != nil {
 				log.Fatal(err)
-				return nil, err
 			}
-			items = append(items, item)
-		}
-		orders[i].Items = items
-		items = []entity.Item{}
+			items := []entity.Item{}
+			for data.Next() {
+				var item entity.Item
+				err := data.Scan(&item.ItemId, &item.ItemCode, &item.Description, &item.Quantity)
+				if err != nil {
+					log.Fatal(err)
+				}
+				items = append(items, item)
+			}
+			orders[x].Items = items
+			//items = []entity.Item{}
+		}(i)
 	}
+	wg.Wait()
 	return orders, nil
 }
 
