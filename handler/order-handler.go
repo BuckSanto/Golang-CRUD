@@ -29,6 +29,10 @@ func (o *OrderHandler) OrderHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
+	if !Auth(w, r) {
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		if id != "" {
@@ -38,12 +42,10 @@ func (o *OrderHandler) OrderHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPost:
 		createOrder(w, r)
-
 	case http.MethodPut:
 		updateOrder(w, r, id)
 	case http.MethodDelete:
 		deleteOrder(w, r, id)
-
 	}
 }
 
