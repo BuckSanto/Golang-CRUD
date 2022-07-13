@@ -16,27 +16,6 @@ const PORT = ":8080"
 
 func main() {
 
-	/*
-		//Retrieve data
-		res, err := http.Get("https://random-data-api.com/api/users/random_user?size=10")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer res.Body.Close()
-
-		var users []entity.UserRandom
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		json.Unmarshal(body, &users)
-
-		for p := range users {
-			fmt.Printf("%+v\n", users[p])
-		}*/
-
-	// API
 	db := context.Connect()
 	defer db.Close()
 
