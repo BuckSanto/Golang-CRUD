@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"golang-crud-sql/context"
-	"golang-crud-sql/entity"
 	"golang-crud-sql/handler"
 	"golang-crud-sql/repository"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -19,24 +16,25 @@ const PORT = ":8080"
 
 func main() {
 
-	//Retrieve data
-	res, err := http.Get("https://random-data-api.com/api/users/random_user?size=10")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
+	/*
+		//Retrieve data
+		res, err := http.Get("https://random-data-api.com/api/users/random_user?size=10")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
 
-	var posts []entity.UserRandom
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+		var users []entity.UserRandom
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	json.Unmarshal(body, &posts)
+		json.Unmarshal(body, &users)
 
-	for p := range posts {
-		fmt.Printf("%+v\n", posts[p])
-	}
+		for p := range users {
+			fmt.Printf("%+v\n", users[p])
+		}*/
 
 	// API
 	db := context.Connect()
@@ -50,11 +48,13 @@ func main() {
 
 	handler.OrderRepo = orderRepo
 	orderService := handler.NewOrderHandler()
+	userRandomService := handler.NewRandomUserHandler()
 
 	r := mux.NewRouter()
+	r.Use(handler.SecureMiddleware)
 	r.HandleFunc("/users", userService.UserHandler)
 	r.HandleFunc("/users/{id}", userService.UserHandler)
-
+	r.HandleFunc("/random-users", userRandomService.RandomUserHandler)
 	r.HandleFunc("/orders", orderService.OrderHandler)
 	r.HandleFunc("/orders/{id}", orderService.OrderHandler)
 

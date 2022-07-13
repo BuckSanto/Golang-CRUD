@@ -29,10 +29,6 @@ func (o *OrderHandler) OrderHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	if !Auth(w, r) {
-		return
-	}
-
 	switch r.Method {
 	case http.MethodGet:
 		if id != "" {
