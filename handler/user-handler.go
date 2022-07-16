@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"golang-crud-sql/entity"
+	"golang-crud-sql/model"
 	"golang-crud-sql/repository"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -30,20 +32,61 @@ func (u *UserHandler) UserHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	switch r.Method {
-	case http.MethodGet:
-		if id != "" {
-			getUserById(w, r, id)
-		} else {
-			getUsers(w, r)
+	if strings.HasSuffix(r.URL.Path, "users/register") {
+		if r.Method == http.MethodPost {
+			registerUser(w, r)
 		}
-	case http.MethodPost:
-		registerUser(w, r)
-	case http.MethodPut:
-		updateUser(w, r, id)
-	case http.MethodDelete:
-		deleteUser(w, r, id)
+	} else if strings.HasSuffix(r.URL.Path, "users/login") {
+		if r.Method == http.MethodPost {
+			loginUsers(w, r)
+		}
+	} else {
+		switch r.Method {
+		case http.MethodGet:
+			if id != "" {
+				getUserById(w, r, id)
+			} else {
+				getUsers(w, r)
+			}
+		case http.MethodPut:
+			updateUser(w, r, id)
+		case http.MethodDelete:
+			deleteUser(w, r, id)
+		}
 	}
+}
+
+func loginUsers(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var loginUser model.Login
+
+	if err := decoder.Decode(&loginUser); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Error decoding json body"))
+		return
+	}
+
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+	user, errMsg := UserRepo.LoginUser(ctx, loginUser)
+	if errMsg != "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	validToken, err := GenerateJWT(user.Username, user.Age)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Failed to generate token"))
+		return
+	}
+
+	var token entity.Token
+	token.Token = validToken
+	json, _ := json.Marshal(token)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
 }
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +154,7 @@ func updateUser(w http.ResponseWriter, r *http.Request, id string) {
 	if id != "" {
 		if idInt, err := strconv.Atoi(id); err == nil {
 			decoder := json.NewDecoder(r.Body)
-			var userSlice entity.User
+			var userSlice model.User
 			if err := decoder.Decode(&userSlice); err != nil {
 				w.Write([]byte("Error decoding json body"))
 				return

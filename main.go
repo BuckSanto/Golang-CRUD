@@ -30,7 +30,7 @@ func main() {
 	userRandomService := handler.NewRandomUserHandler()
 
 	r := mux.NewRouter()
-	r.Use(handler.SecureMiddleware)
+	r.Use(handler.IsAuthorized)
 	r.HandleFunc("/users", userService.UserHandler)
 	r.HandleFunc("/users/{id}", userService.UserHandler)
 	r.HandleFunc("/random-users", userRandomService.RandomUserHandler)

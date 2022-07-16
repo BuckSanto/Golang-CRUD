@@ -10,11 +10,6 @@ const USERNAME = "belajar-golang"
 const PASSWORD = "Password123"
 const SECUREPASSWORD = "$2a$14$t4CQ67jNbN3EdaBKfa3Gpe5UMqtXB45IFK8MQrAK.d43ftW4UbMp2"
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
 func SecureMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
